@@ -12,7 +12,7 @@ import { neon } from '@neondatabase/serverless';
 
 @Injectable()
 export class DatabaseService {
-  private readonly sql;
+  public readonly sql;
 
   constructor(private readonly configService: ConfigService) {
     const databaseUrl = this.configService.get<string>('DATABASE_URL');
@@ -30,7 +30,14 @@ export class DatabaseService {
     const data = await this.sql`SELECT NOW() AS current_time;`;
     return data;
   }
-  async query<T = any>(query: string, params?: any[]): Promise<T[]> {
-    return this.sql(query, params) as Promise<T[]>;
+  async query(
+    strings: TemplateStringsArray,
+    ...values: any[]
+  ): Promise<any[]> {
+    return this.sql(strings, ...values);
   }
+
+
+
+
 }

@@ -9,9 +9,10 @@ import { AuthModule } from '../auth/auth.module';
 import { MailService } from '../common/mail/mail.service';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../infrastructure/database/database.module';
+import { NotificationsModule } from '../notifications/notifications.module'; 
 
 @Module({
-  imports: [AuthModule, ConfigModule, DatabaseModule],
+  imports: [AuthModule, ConfigModule, DatabaseModule, NotificationsModule],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, PasswordResetRepository, MailService],
   exports: [UsersService],

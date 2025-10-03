@@ -16,6 +16,8 @@ import { MailService } from '../../common/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'crypto';
+import { NotificationsService } from '../../notifications/notifications.service';
+
 
 @Injectable()
 export class UsersService {
@@ -26,6 +28,8 @@ export class UsersService {
     private readonly authService: AuthService,
     private readonly mailService: MailService,
     private readonly config: ConfigService,
+    private readonly notificationsService: NotificationsService,
+    private readonly usersRepository: UsersRepository,
   ) {
     const gid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (gid) this.googleClient = new OAuth2Client(gid);
@@ -49,6 +53,8 @@ export class UsersService {
 
   const created = await this.usersRepo.create({ nombre, email, telefono, password_hash: hashed });
   console.log("✅ User created:", created);
+
+  await this.notificationsService.sendConfirmationEmail(created.email, created.nombre);
 
   const token = this.authService.signPayload({ sub: created.id, email: created.email });
   console.log("🎟 Token generated");
@@ -140,15 +146,20 @@ export class UsersService {
   }
 
   async findById(id: number) {
-    const user = await this.usersRepo.findById(id);
-    if (!user) throw new NotFoundException('User not found');
-    return this.userToSafe(user);
+    console.log('🔍 Buscando usuario con id:', id);
+
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return user;
   }
 
+
   async deleteUser(id: number) {
-    const user = await this.usersRepo.findById(id);
-    if (!user) throw new NotFoundException('User not found');
-    await this.usersRepo.delete(id);
-    return { ok: true };
+    await this.usersRepository.delete(id);
+    return { message: 'User deleted successfully' };
   }
 }
