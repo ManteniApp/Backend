@@ -30,4 +30,7 @@ export class DatabaseService {
     const data = await this.sql`SELECT NOW() AS current_time;`;
     return data;
   }
+  async query<T = any>(query: string, params?: any[]): Promise<T[]> {
+    return this.sql(query, params) as Promise<T[]>;
+  }
 }
