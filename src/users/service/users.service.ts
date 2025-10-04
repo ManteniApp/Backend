@@ -17,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'crypto';
 import { NotificationsService } from '../../notifications/notifications.service';
-
+import { AuditService } from '../../common/audit/audit.service';
 
 @Injectable()
 export class UsersService {
@@ -30,6 +30,7 @@ export class UsersService {
     private readonly config: ConfigService,
     private readonly notificationsService: NotificationsService,
     private readonly usersRepository: UsersRepository,
+    private readonly auditService: AuditService,
   ) {
     const gid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (gid) this.googleClient = new OAuth2Client(gid);
@@ -111,8 +112,15 @@ export class UsersService {
 
   }
 
-  async requestPasswordReset(email: string, frontendUrl: string) {
+  async requestPasswordReset(email: string, frontendUrl: string,  clientIp?: string) {
     const user = await this.usersRepo.findByEmail(email);
+     // Registrar intento en auditoría
+    await this.auditService.log({
+      userId: user?.id,
+      email,
+      eventType: 'PASSWORD_RESET_REQUEST',
+      metadata: { ip: clientIp },
+    });
     if (!user) {
       // for security, don't reveal existence; but you can return success
       return { ok: true };
@@ -120,7 +128,9 @@ export class UsersService {
 
     // create token
     const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + (Number(this.config.get('PASSWORD_RESET_TOKEN_EXP_H') || 1) * 3600 * 1000)); // default 1h
+    const expiresAt = new Date(Date.now() + (Number(this.config.get('PASSWORD_RESET_TOKEN_EXP_H') || 1) * 3600 * 1000));
+    console.log("Guardando expiresAt UTC:", expiresAt.toISOString());
+
     await this.resetRepo.create(user.id, token, expiresAt);
 
     // send mail with link (frontend handles reset form)
@@ -135,6 +145,7 @@ export class UsersService {
   }
 
   async resetPassword(token: string, newPassword: string) {
+    console.log('🔑 Token recibido:', JSON.stringify(token));
     const reset = await this.resetRepo.findValidByToken(token);
     if (!reset) throw new NotFoundException('Token inválido o expirado');
 
@@ -142,6 +153,14 @@ export class UsersService {
     const hashed = await bcrypt.hash(newPassword, 10);
     await this.usersRepo.updatePasswordHash(reset.user_id, hashed);
     await this.resetRepo.markUsed(reset.id);
+
+      // Registrar completado en auditoría
+    await this.auditService.log({
+      userId: reset.user_id,
+      eventType: 'PASSWORD_RESET_COMPLETED',
+      metadata: { token: reset.token },
+    });
+    
     return { ok: true };
   }
 

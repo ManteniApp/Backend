@@ -32,9 +32,9 @@ export class PasswordResetRepository {
   async findValidByToken(token: string) {
     const res = await this.db.client<PasswordResetRow[]>`
       SELECT * FROM password_resets
-      WHERE token = ${token} AND used = false AND expires_at > NOW()
-      LIMIT 1;
+      WHERE token = ${token};
     `;
+    console.log('🔍 Resultado de findValidByToken:', res);
     return res.length ? res[0] : null;
   }
 
