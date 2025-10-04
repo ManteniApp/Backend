@@ -1,10 +1,13 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
+import { Request } from 'express';
+
+
 
 @Controller('users')
 export class UsersController {
@@ -26,14 +29,24 @@ export class UsersController {
   }
 
   @Post('password/forgot')
-  async forgot(@Body() body: { email: string }, @Query('frontendUrl') frontendUrl?: string) {
-    // Option: pass frontendUrl as query param, or use env FRONTEND_URL in service
+  async forgot(
+    @Body() body: { email: string },
+    @Req() req, 
+    @Query('frontendUrl') frontendUrl?: string
+  ) {
+    
+    const ip =
+      (req.headers['x-forwarded-for'] as string) ||
+      req.ip;
+
     const front = frontendUrl || process.env.FRONTEND_URL || 'http://localhost:3000';
-    return this.usersService.requestPasswordReset(body.email, front);
+    return this.usersService.requestPasswordReset(body.email, front, ip);
   }
+
 
   @Post('password/reset')
   async reset(@Body() body: { token: string; newPassword: string }) {
+    
     return this.usersService.resetPassword(body.token, body.newPassword);
   }
 
