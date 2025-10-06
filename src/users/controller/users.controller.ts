@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
@@ -6,7 +7,7 @@ import { UsersService } from '../service/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { Request } from 'express';
-
+import { Throttle } from '@nestjs/throttler';
 
 
 @Controller('users')
@@ -28,20 +29,16 @@ export class UsersController {
     return this.usersService.registerOrLoginWithGoogle(body.idToken);
   }
 
-  @Post('password/forgot')
-  async forgot(
-    @Body() body: { email: string },
-    @Req() req, 
-    @Query('frontendUrl') frontendUrl?: string
-  ) {
-    
-    const ip =
-      (req.headers['x-forwarded-for'] as string) ||
-      req.ip;
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('password/forgot')
+  async forgot(@Body() body: { email: string }, @Req() req, @Query('frontendUrl') frontendUrl?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const ip = (req.headers['x-forwarded-for'] as string) || req.ip;
     const front = frontendUrl || process.env.FRONTEND_URL || 'http://localhost:3000';
     return this.usersService.requestPasswordReset(body.email, front, ip);
   }
+
 
 
   @Post('password/reset')
