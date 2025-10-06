@@ -1,5 +1,5 @@
-/* eslint-disable prettier/prettier */
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+// src/users/dto/create-user.dto.ts
+import { IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -11,5 +11,7 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
+  @IsOptional()
   telefono?: string;
+  
 }
