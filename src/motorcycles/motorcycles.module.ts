@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { MotorcyclesController } from './controller/motorcycles.controller';
 import { MotorcyclesService } from './service/motorcycles.service';
