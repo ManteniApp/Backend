@@ -1,6 +1,5 @@
 /* eslint-disable prettier/prettier */
-// src/auth/auth.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -11,7 +10,11 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
-    verify<T extends object = any>(token: string) {
-    return this.jwtService.verify<T>(token);
+  verify<T extends object = any>(token: string) {
+    try {
+      return this.jwtService.verify<T>(token);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
     }
+  }
 }
