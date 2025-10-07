@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post,Get, UseGuards } from '@nestjs/common';
 import { MotorcyclesService } from '../service/motorcycles.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard'; // 👈 importa tu guard aquí
 import express from 'express';
@@ -32,6 +32,13 @@ export class MotorcyclesController {
       cliente_id: user.id, // 👈 relaciona la moto con el usuario autenticado
       ...body,
     });
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async findAll(@Req() req: express.Request) {
+    const user = req.user as { id: number }; // El req.user es poblado por el JwtAuthGuard, donde obtenemos el id por el token mediante el JwtStrategy
+    return this.motorcyclesService.findAllByUserId(user.id);
   }
 
 }

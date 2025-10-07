@@ -38,4 +38,21 @@ export class MotorcyclesService {
     this.logger.log(`✅ Motocicleta creada con id ${moto.id}`);
     return moto;
   }
+
+  async findAllByUserId(userId: number) {
+    this.logger.log(`Buscando motocicletas para el usuario con id ${userId}`);
+    if (!userId) {
+      throw new BadRequestException('El ID de usuario es requerido');
+    }
+    const motos = await this.motorcyclesRepo.findAllByUserId(userId);
+    return motos.map((moto) => ({
+      id: moto.id,
+      marca: moto.marca,  
+      modelo : moto.modelo,
+      placa: moto.placa,
+      año: moto.anio,
+      kilometraje: moto.kilometraje,
+    }));
+  }
+
 }
