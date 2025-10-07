@@ -5,7 +5,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, Req, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { ConfigService } from '@nestjs/config';
-import type { Request } from 'express';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { Request } from 'express';
