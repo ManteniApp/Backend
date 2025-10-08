@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
@@ -39,13 +39,48 @@ export class UsersController {
     return this.usersService.requestPasswordReset(body.email, front, ip);
   }
 
-
-
   @Post('password/reset')
   async reset(@Body() body: { token: string; newPassword: string }) {
     
     return this.usersService.resetPassword(body.token, body.newPassword);
   }
+
+  /**
+   * Obtener perfil del usuario por ID
+   */
+  @Get('profile/:userId')
+  async getMyProfile(@Param('userId') userId: string) {
+    return this.usersService.getMyProfile(Number(userId));
+  }
+
+  /**
+   * Actualizar perfil completo por ID
+   */
+  @Put('profile/:userId')
+  async updateProfile(@Param('userId') userId: string, @Body() body: any) {
+    return this.usersService.updateProfile(Number(userId), body);
+  }
+
+  /**
+   * Actualizar perfil básico por ID
+   */
+  @Put('profile/:userId/basic')
+  async updateBasicProfile(
+    @Param('userId') userId: string, 
+    @Body() body: { nombre?: string; telefono?: string }
+  ) {
+    return this.usersService.updateBasicProfile(Number(userId), body.nombre, body.telefono);
+  }
+
+
+  /**
+   * Obtener todos los usuarios
+   */
+  @Get()
+  async getAllUsers() {
+    return this.usersService.getAllUsers();
+  }
+
 
   @Get(':id')
   async getUser(@Param('id') id: string) {
