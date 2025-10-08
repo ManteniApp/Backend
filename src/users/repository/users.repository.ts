@@ -103,4 +103,58 @@ export class UsersRepository {
       UPDATE usuarios SET password_hash = ${passwordHash} WHERE id = ${userId}
     `;
   }
+
+  async updateUser(id: number, updateData: {
+  nombre?: string;
+  email?: string;
+  telefono?: string;
+  password_hash?: string;
+}): Promise<UserRow> {
+  console.log("🔄 Actualizando usuario ID:", id, "Datos:", updateData);
+
+  try {
+    console.log("📝 Ejecutando SQL con parámetros:", {
+      nombre: updateData.nombre,
+      email: updateData.email,
+      telefono: updateData.telefono,
+      password_hash: updateData.password_hash ? '[HASHED]' : undefined,
+      fecha_actualizacion: new Date(),
+      id: id
+    });
+
+    const result = await this.db.client`
+      UPDATE usuarios 
+      SET 
+        nombre = COALESCE(${updateData.nombre}, nombre),
+        email = COALESCE(${updateData.email}, email),
+        telefono = COALESCE(${updateData.telefono}, telefono),
+        password_hash = COALESCE(${updateData.password_hash}, password_hash),
+        fecha_actualizacion = ${new Date()}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    
+    console.log("✅ Resultado de la actualización:", result);
+    console.log("📊 Tipo de resultado:", typeof result);
+    console.log("🔢 Longitud del resultado:", Array.isArray(result) ? result.length : 'No es array');
+    
+    if (!result || !Array.isArray(result) || result.length === 0) {
+      throw new Error('No se encontró el usuario para actualizar');
+    }
+    
+    return result[0];
+  } catch (err) {
+    console.error("❌ Error en updateUser:", err);
+    throw err;
+  }
+}
+
+  async findAll() {
+    const result = await this.db.client<UserRow[]>`
+      SELECT * FROM usuarios ORDER BY fecha_registro DESC
+    `;
+    return result;
+  }
+
+}
 }

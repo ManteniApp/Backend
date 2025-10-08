@@ -19,6 +19,7 @@ import { AuditService } from '../../common/audit/audit.service';
 @Injectable()
 export class UsersService {
   private googleClient: OAuth2Client | null = null;
+  logger: any;
 
   constructor(
     private readonly usersRepo: UsersRepository,
