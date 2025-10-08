@@ -1,4 +1,4 @@
-/* eslint-disable prettier/prettier */
+// src/users/repository/users.repository.ts
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../infrastructure/database/database.service';
 
@@ -42,6 +42,18 @@ export class UsersRepository {
     }
   }
 
+  async findAll() {
+    try {
+      const result = await this.db.client<UserRow[]>`
+        SELECT * FROM usuarios ORDER BY fecha_registro DESC
+      `;
+      return result;
+    } catch (error) {
+      console.error("❌ Error en findAll:", error);
+      throw error;
+    }
+  }
+
   async create(user: { 
     nombre: string; 
     email: string; 
@@ -52,6 +64,7 @@ export class UsersRepository {
     console.log("📥 Datos antes del INSERT:", user);
 
     try {
+      // ✅ ELIMINADO identificacion - usa solo las columnas que existen
       const result = await this.db.client<UserRow[]>`
         INSERT INTO usuarios (nombre, email, telefono, password_hash, google_id)
         VALUES (${user.nombre}, ${user.email}, ${user.telefono ?? null}, ${user.password_hash ?? null}, ${user.google_id ?? null})
@@ -143,4 +156,5 @@ export class UsersRepository {
     return result;
   }
 
+}
 }
