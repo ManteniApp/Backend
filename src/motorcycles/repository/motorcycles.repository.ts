@@ -16,20 +16,61 @@ export type MotorcycleRow = {
 export class MotorcyclesRepository {
   private readonly logger = new Logger(MotorcyclesRepository.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService) { }
 
   async create(data: Omit<MotorcycleRow, 'id'>): Promise<MotorcycleRow> {
-    // Implementar la creación de la motocicleta en la base de datos y asociar con el usuario
-    return {} as MotorcycleRow;
+    try {
+      const result = await this.db.query`
+        INSERT INTO motos (cliente_id, marca, modelo, placa, anio, kilometraje)
+        VALUES (${data.cliente_id}, ${data.marca}, ${data.modelo}, ${data.placa}, ${data.anio || null}, ${data.kilometraje || null})
+        RETURNING *
+      `;
+      this.logger.log(`✅ Motocicleta creada en BD con id ${result[0].id}`);
+      return result[0];
+    } catch (error) {
+      this.logger.error('❌ Error al crear motocicleta en BD:', error);
+      throw error;
+    }
   }
 
-  async findByPlaca(placa: string): Promise<MotorcycleRow | null> {
-    // Implementar la búsqueda por placa
-    return null;
+  async findByPlacaAndUserId(placa: string, cliente_id: number): Promise<MotorcycleRow | null> {
+    try {
+      const result = await this.db.query`
+      SELECT * FROM motos 
+      WHERE placa = ${placa} AND cliente_id = ${cliente_id}
+    `;
+      return result[0] || null;
+    } catch (error) {
+      this.logger.error('❌ Error al buscar motocicleta por placa y usuario:', error);
+      throw error;
+    }
   }
+
+async findByPlaca(placa: string): Promise<MotorcycleRow | null> {
+  try {
+    const result = await this.db.query`
+      SELECT * FROM motos 
+      WHERE placa = ${placa}
+    `;
+    return result[0] || null;
+  } catch (error) {
+    this.logger.error('❌ Error al buscar motocicleta por placa:', error);
+    throw error;
+  }
+}
+
   async findAllByUserId(cliente_id: number): Promise<MotorcycleRow[]> {
-    // Implementar la búsqueda de todas las motos por cliente_id
-    return {} as MotorcycleRow[];
+    try {
+      const result = await this.db.query`
+        SELECT * FROM motos 
+        WHERE cliente_id = ${cliente_id}
+        ORDER BY id DESC
+      `;
+      this.logger.log(`✅ Encontradas ${result.length} motocicletas para usuario ${cliente_id}`);
+      return result;
+    } catch (error) {
+      this.logger.error('❌ Error al buscar motocicletas por usuario:', error);
+      throw error;
+    }
   }
-
 }
