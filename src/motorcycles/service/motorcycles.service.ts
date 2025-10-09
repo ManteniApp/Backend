@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { MotorcyclesRepository } from '../repository/motorcycles.repository';
 
 
@@ -54,5 +54,40 @@ export class MotorcyclesService {
       kilometraje: moto.kilometraje,
     }));
   }
+
+  async findByPlaca(placa: string, userId: number) {
+  this.logger.log(`Buscando motocicleta con placa: ${placa} para usuario: ${userId}`);
+  
+  if (!placa) {
+    throw new BadRequestException('La placa es requerida');
+  }
+
+  if (!userId) {
+    throw new BadRequestException('Usuario no autenticado');
+  }
+
+  // Validar formato básico de placa (opcional)
+  if (placa.length < 3 || placa.length > 20) {
+    throw new BadRequestException('La placa debe tener entre 3 y 20 caracteres');
+  }
+
+  const moto = await this.motorcyclesRepo.findByPlacaAndUserId(placa, userId);
+  
+  if (!moto) {
+    throw new NotFoundException(`No tienes registrada una motocicleta con la placa ${placa}`);
+  }
+
+  this.logger.log(`✅ Motocicleta encontrada con id ${moto.id}`);
+  
+  return {
+    id: moto.id,
+    cliente_id: moto.cliente_id,
+    marca: moto.marca,
+    modelo: moto.modelo,
+    placa: moto.placa,
+    anio: moto.anio,
+    kilometraje: moto.kilometraje,
+  };
+}
 
 }
