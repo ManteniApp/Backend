@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UsersRepository, UserRow } from '../repository/users.repository';
+import { UsersRepository} from '../repository/users.repository';
 import { PasswordResetRepository } from '../repository/password-reset.repository';
 import { AuthService } from '../../auth/auth.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -15,6 +15,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'crypto';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { AuditService } from '../../common/audit/audit.service';
+import { UserRow } from '../../domain/entities/user.entity';
 
 @Injectable()
 export class UsersService {

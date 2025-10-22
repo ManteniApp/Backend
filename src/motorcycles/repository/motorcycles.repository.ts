@@ -1,4 +1,8 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'; // 👈 Agregamos NotFoundException para delete si es necesario
 import { DatabaseService } from '../../infrastructure/database/database.service';
 
