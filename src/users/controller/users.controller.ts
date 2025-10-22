@@ -1,8 +1,10 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Put, Param, Post, Query, Req, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '../dto/create-user.dto';

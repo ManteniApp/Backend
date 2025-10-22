@@ -148,13 +148,5 @@ export class UsersRepository {
     throw err;
   }
 }
-
-  async findAll() {
-    const result = await this.db.client<UserRow[]>`
-      SELECT * FROM usuarios ORDER BY fecha_registro DESC
-    `;
-    return result;
-  }
-
 }
-}
+
