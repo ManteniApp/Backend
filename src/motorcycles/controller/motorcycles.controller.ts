@@ -74,4 +74,19 @@ export class MotorcyclesController {
     const user = req.user as { id: number };
     return this.motorcyclesService.deleteMotorcycle(+id, user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('specs')
+  async getSpecifications(
+    @Body() body: { marca: string; modelo: string },
+  ) {
+    return this.motorcyclesService.getMotorcycleSpecs(body.marca, body.modelo);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('specs/all')
+  async getAllSpecs() {
+    return this.motorcyclesService.getAllSpecs();
+  }
+
 }
