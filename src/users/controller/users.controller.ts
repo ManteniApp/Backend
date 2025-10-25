@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, BadRequestException, UnauthorizedException, Put } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -61,7 +61,7 @@ export class UsersController {
       `response_type=code&` +
       `scope=${encodeURIComponent(scope)}&` +
       `access_type=online&` +
-      `prompt=select_account`; 
+      `prompt=select_account`;
     return {
       url,
       type: 'LOGIN',
@@ -192,7 +192,7 @@ export class UsersController {
    */
   @Put('profile/:userId/basic')
   async updateBasicProfile(
-    @Param('userId') userId: string, 
+    @Param('userId') userId: string,
     @Body() body: { nombre?: string; telefono?: string }
   ) {
     return this.usersService.updateBasicProfile(Number(userId), body.nombre, body.telefono);

@@ -15,6 +15,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'crypto';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { AuditService } from '../../common/audit/audit.service';
+import { DatabaseService } from 'src/infrastructure/database/database.service';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,7 @@ export class UsersService {
     private readonly config: ConfigService,
     private readonly notificationsService: NotificationsService,
     private readonly auditService: AuditService,
+    private readonly db: DatabaseService,
   ) {
     const gid = this.config.get<string>('GOOGLE_CLIENT_ID');
   }
@@ -269,8 +271,99 @@ export class UsersService {
     }
   }
 
-  async deleteUser(id: number) {
-    await this.usersRepo.delete(id);
-    return { message: 'User deleted successfully' };
+  async deleteUser(id: number): Promise<{ message: string }> {
+  const user = await this.usersRepo.findById(id);
+  if (!user) {
+    throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
   }
+
+  try {
+    // Primero eliminar las motos asociadas al usuario
+    await this.db.client`
+      DELETE FROM motos WHERE cliente_id = ${id}
+    `;
+
+    // Luego eliminar el usuario
+    await this.usersRepo.delete(id);
+
+    return { message: 'Usuario eliminado exitosamente' };
+  } catch (error) {
+    console.error('Error eliminando usuario:', error);
+    throw new Error('Error al eliminar el usuario: ' + error.message);
+  }
+}
+
+  // Agregar estos métodos en UsersService
+
+  async getMyProfile(userId: number) {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    return this.userToSafe(user);
+  }
+
+  async updateProfile(userId: number, updateData: {
+    nombre?: string;
+    email?: string;
+    telefono?: string;
+    password?: string;
+  }) {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const updatePayload: any = {
+      nombre: updateData.nombre,
+      email: updateData.email,
+      telefono: updateData.telefono
+    };
+
+    // Si se proporciona una nueva contraseña, hashearla
+    if (updateData.password) {
+      updatePayload.password_hash = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const updatedUser = await this.usersRepo.updateUser(userId, updatePayload);
+
+    await this.safeAuditLog({
+      userId: userId,
+      eventType: 'PROFILE_UPDATED',
+      metadata: { fields: Object.keys(updateData) },
+    });
+
+    return this.userToSafe(updatedUser);
+  }
+
+  async updateBasicProfile(userId: number, nombre?: string, telefono?: string) {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const updatedUser = await this.usersRepo.updateUser(userId, {
+      nombre,
+      telefono
+    });
+
+    await this.safeAuditLog({
+      userId: userId,
+      eventType: 'BASIC_PROFILE_UPDATED',
+      metadata: { nombre, telefono },
+    });
+
+    return this.userToSafe(updatedUser);
+  }
+
+  async getAllUsers() {
+    try {
+      const users = await this.usersRepo.findAll();
+      return users.map(user => this.userToSafe(user));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw new Error('Error al obtener los usuarios');
+    }
+  }
+
 }
