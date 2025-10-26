@@ -296,47 +296,6 @@ export class UsersService {
 
   // Agregar estos métodos en UsersService
 
-  async getMyProfile(userId: number) {
-    const user = await this.usersRepo.findById(userId);
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-    return this.userToSafe(user);
-  }
-
-  async updateProfile(userId: number, updateData: {
-    nombre?: string;
-    email?: string;
-    telefono?: string;
-    password?: string;
-  }) {
-    const user = await this.usersRepo.findById(userId);
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    const updatePayload: any = {
-      nombre: updateData.nombre,
-      email: updateData.email,
-      telefono: updateData.telefono
-    };
-
-    // Si se proporciona una nueva contraseña, hashearla
-    if (updateData.password) {
-      updatePayload.password_hash = await bcrypt.hash(updateData.password, 10);
-    }
-
-    const updatedUser = await this.usersRepo.updateUser(userId, updatePayload);
-
-    await this.safeAuditLog({
-      userId: userId,
-      eventType: 'PROFILE_UPDATED',
-      metadata: { fields: Object.keys(updateData) },
-    });
-
-    return this.userToSafe(updatedUser);
-  }
-
   //Nuevos metodos para perfil
   // NUEVOS MÉTODOS SIMPLES
   async getMyProfile(userId: number) {
