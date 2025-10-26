@@ -355,5 +355,13 @@ export class UsersService {
     const updatedUser = await this.usersRepo.updateUser(userId, updateData);
     return this.userToSafe(updatedUser);
   }
-
+  async updatePassword(userId: number, currentPassword: string, newPassword: string) {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValid) throw new UnauthorizedException('Contraseña actual incorrecta');
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.usersRepo.updatePasswordHash(userId, hashed);
+    return { message: 'Contraseña actualizada exitosamente' };
+  }
 }
