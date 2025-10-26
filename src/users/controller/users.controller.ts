@@ -64,7 +64,7 @@ export class UsersController {
       `response_type=code&` +
       `scope=${encodeURIComponent(scope)}&` +
       `access_type=online&` +
-      `prompt=select_account`; 
+      `prompt=select_account`;
     return {
       url,
       type: 'LOGIN',
@@ -206,7 +206,7 @@ export class UsersController {
    */
   @Put('profile/:userId/basic')
   async updateBasicProfile(
-    @Param('userId') userId: string, 
+    @Param('userId') userId: string,
     @Body() body: { nombre?: string; telefono?: string }
   ) {
     return this.usersService.updateBasicProfile(Number(userId), body.nombre, body.telefono);

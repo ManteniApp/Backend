@@ -15,6 +15,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { randomBytes } from 'crypto';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { AuditService } from '../../common/audit/audit.service';
+import { DatabaseService } from 'src/infrastructure/database/database.service';
 import { UserRow } from '../../domain/entities/user.entity';
 
 @Injectable()
@@ -30,6 +31,7 @@ export class UsersService {
     private readonly config: ConfigService,
     private readonly notificationsService: NotificationsService,
     private readonly auditService: AuditService,
+    private readonly db: DatabaseService,
   ) {
     const gid = this.config.get<string>('GOOGLE_CLIENT_ID');
   }
@@ -270,10 +272,29 @@ export class UsersService {
     }
   }
 
-  async deleteUser(id: number) {
-    await this.usersRepo.delete(id);
-    return { message: 'User deleted successfully' };
+  async deleteUser(id: number): Promise<{ message: string }> {
+  const user = await this.usersRepo.findById(id);
+  if (!user) {
+    throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
   }
+
+  try {
+    // Primero eliminar las motos asociadas al usuario
+    await this.db.client`
+      DELETE FROM motos WHERE cliente_id = ${id}
+    `;
+
+    // Luego eliminar el usuario
+    await this.usersRepo.delete(id);
+
+    return { message: 'Usuario eliminado exitosamente' };
+  } catch (error) {
+    console.error('Error eliminando usuario:', error);
+    throw new Error('Error al eliminar el usuario: ' + error.message);
+  }
+}
+
+  // Agregar estos métodos en UsersService
 
   //Nuevos metodos para perfil
   // NUEVOS MÉTODOS SIMPLES
