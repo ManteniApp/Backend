@@ -3,6 +3,12 @@
 /node_modules
 /build
 
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv/
+
 # Logs
 logs
 *.log

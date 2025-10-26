@@ -1,16 +1,12 @@
+/* eslint-disable prettier/prettier */
 // src/users/repository/users.repository.ts
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../infrastructure/database/database.service';
-
-export interface UserRow {
-  id: number;
-  nombre: string;
-  telefono: string;
-  email: string;
-  password_hash?: string;
-  google_id?: string;
-  fecha_registro: Date;
-}
+import { UserRow } from '../../domain/entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
@@ -148,5 +144,5 @@ export class UsersRepository {
     throw err;
   }
 }
-
 }
+

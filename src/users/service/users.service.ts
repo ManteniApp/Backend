@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UsersRepository, UserRow } from '../repository/users.repository';
+import { UsersRepository} from '../repository/users.repository';
 import { PasswordResetRepository } from '../repository/password-reset.repository';
 import { AuthService } from '../../auth/auth.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { AuditService } from '../../common/audit/audit.service';
 import { DatabaseService } from 'src/infrastructure/database/database.service';
+import { UserRow } from '../../domain/entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -336,34 +337,64 @@ export class UsersService {
     return this.userToSafe(updatedUser);
   }
 
-  async updateBasicProfile(userId: number, nombre?: string, telefono?: string) {
+  //Nuevos metodos para perfil
+  // NUEVOS MÉTODOS SIMPLES
+  async getMyProfile(userId: number) {
     const user = await this.usersRepo.findById(userId);
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    const updatedUser = await this.usersRepo.updateUser(userId, {
-      nombre,
-      telefono
-    });
-
-    await this.safeAuditLog({
-      userId: userId,
-      eventType: 'BASIC_PROFILE_UPDATED',
-      metadata: { nombre, telefono },
-    });
-
-    return this.userToSafe(updatedUser);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return this.userToSafe(user);
   }
 
   async getAllUsers() {
-    try {
-      const users = await this.usersRepo.findAll();
-      return users.map(user => this.userToSafe(user));
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      throw new Error('Error al obtener los usuarios');
+    const users = await this.usersRepo.findAll();
+    return users.map(user => this.userToSafe(user));
+  }
+
+  async updateProfile(userId: number, updateData: {
+    nombre?: string;
+    email?: string;
+    telefono?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }) {
+    const user = await this.usersRepo.findById(userId);
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    // Verificar email único
+    if (updateData.email && updateData.email !== user.email) {
+      const existing = await this.usersRepo.findByEmail(updateData.email);
+      if (existing) throw new ConflictException('Email ya está en uso');
     }
+
+    // Preparar datos para actualizar
+    const updatePayload: any = {};
+    if (updateData.nombre) updatePayload.nombre = updateData.nombre;
+    if (updateData.email) updatePayload.email = updateData.email;
+    if (updateData.telefono) updatePayload.telefono = updateData.telefono;
+
+    // Cambiar contraseña si se proporciona
+    if (updateData.newPassword) {
+      if (!updateData.currentPassword) {
+        throw new UnauthorizedException('Contraseña actual requerida');
+      }
+      
+      const isValid = await bcrypt.compare(updateData.currentPassword, user.password_hash);
+      if (!isValid) throw new UnauthorizedException('Contraseña actual incorrecta');
+      
+      updatePayload.password_hash = await bcrypt.hash(updateData.newPassword, 10);
+    }
+
+    const updatedUser = await this.usersRepo.updateUser(userId, updatePayload);
+    return this.userToSafe(updatedUser);
+  }
+
+  async updateBasicProfile(userId: number, nombre?: string, telefono?: string) {
+    const updateData: any = {};
+    if (nombre) updateData.nombre = nombre;
+    if (telefono) updateData.telefono = telefono;
+
+    const updatedUser = await this.usersRepo.updateUser(userId, updateData);
+    return this.userToSafe(updatedUser);
   }
 
 }
