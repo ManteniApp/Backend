@@ -4,13 +4,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Body, Controller, Delete, Get, Put, Param, Post, Query, Req, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Put, Param, Post, Query, Req, BadRequestException, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UsersService } from '../service/users.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 
 @Controller('users')
@@ -187,6 +188,17 @@ export class UsersController {
   @Put('profile/:userId')
   async updateProfile(@Param('userId') userId: string, @Body() body: any) {
     return this.usersService.updateProfile(Number(userId), body);
+  }
+  /**
+   * Actualizar contraseña por ID
+   */
+  @UseGuards(JwtAuthGuard)
+  @Put('profile/:userId/password')
+  async updatePassword(
+    @Param('userId') userId: string,
+    @Body() body: { oldPassword: string; newPassword: string }
+  ) {
+    return this.usersService.updatePassword(Number(userId), body.oldPassword, body.newPassword);
   }
 
   /**
