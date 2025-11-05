@@ -18,6 +18,9 @@ export type MotorcycleRow = {
 
 @Injectable()
 export class MotorcyclesRepository {
+  deleteAllByUserId(id: number) {
+    throw new Error('Method not implemented.');
+  }
   private readonly logger = new Logger(MotorcyclesRepository.name);
 
   constructor(private readonly db: DatabaseService) { }

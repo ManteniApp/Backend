@@ -183,15 +183,6 @@ export class MotorcyclesService {
     return { message: 'Motocicleta eliminada exitosamente' };
   }
 
-  async getMotorcycleSpecs(marca: string, modelo: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const specs = await this.motorcycleSpecsRepo.findByMarcaAndModelo(marca, modelo);
-    if (!specs) {
-      throw new NotFoundException(`No se encontraron especificaciones para ${marca} ${modelo}`);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return specs;
-  }
 
   async getAllSpecs() {
   return this.motorcycleSpecsRepo.findAll();

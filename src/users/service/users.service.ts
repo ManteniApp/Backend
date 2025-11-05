@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Injectable, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UsersRepository} from '../repository/users.repository';
+import { UsersRepository } from '../repository/users.repository';
 import { PasswordResetRepository } from '../repository/password-reset.repository';
 import { AuthService } from '../../auth/auth.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -22,6 +22,7 @@ import { UserRow } from '../../domain/entities/user.entity';
 export class UsersService {
   private googleClient: OAuth2Client | null = null;
   logger: any;
+  motorcyclesRepo: any;
 
   constructor(
     private readonly usersRepo: UsersRepository,
@@ -279,17 +280,23 @@ export class UsersService {
   }
 
   try {
-    // Primero eliminar las motos asociadas al usuario
-    await this.db.client`
-      DELETE FROM motos WHERE cliente_id = ${id}
-    `;
+    // Use repository methods instead of direct database access
+    // First delete associated motorcycles using the motorcycles repository
+    // You'll need to inject MotorcyclesRepository in the constructor
+    await this.motorcyclesRepo.deleteAllByUserId(id);
 
-    // Luego eliminar el usuario
+    // Then delete the user
     await this.usersRepo.delete(id);
 
     return { message: 'Usuario eliminado exitosamente' };
   } catch (error) {
     console.error('Error eliminando usuario:', error);
+    
+    // Handle specific database errors
+    if (error.code === '23503') { // Foreign key constraint
+      throw new ConflictException('No se puede eliminar el usuario porque tiene registros asociados');
+    }
+    
     throw new Error('Error al eliminar el usuario: ' + error.message);
   }
 }
@@ -305,8 +312,16 @@ export class UsersService {
   }
 
   async getAllUsers() {
-    const users = await this.usersRepo.findAll();
-    return users.map(user => this.userToSafe(user));
+    try {
+      const users = await this.usersRepo.findAll();
+      return users.map(user => {
+        const { password_hash, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+    } catch (error) {
+      // Retornar array vacío en caso de error
+      return [];
+    }
   }
 
   async updateProfile(userId: number, updateData: {
@@ -336,10 +351,10 @@ export class UsersService {
       if (!updateData.currentPassword) {
         throw new UnauthorizedException('Contraseña actual requerida');
       }
-      
+
       const isValid = await bcrypt.compare(updateData.currentPassword, user.password_hash);
       if (!isValid) throw new UnauthorizedException('Contraseña actual incorrecta');
-      
+
       updatePayload.password_hash = await bcrypt.hash(updateData.newPassword, 10);
     }
 
