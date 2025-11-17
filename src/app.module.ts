@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MotorcyclesModule } from './motorcycles/motorcycles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { SavingsModule } from './savings/savings.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -27,6 +28,7 @@ import { APP_GUARD } from '@nestjs/core';
     AuthModule,
     MotorcyclesModule,
     MaintenanceModule,
+    SavingsModule,
     DatabaseModule,
   ],
   controllers: [AppController],
