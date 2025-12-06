@@ -3,8 +3,11 @@
 import { Body, Controller, Post, Get, UseGuards, Patch, Delete, Param, Req } from '@nestjs/common'; // 👈 Agregamos Patch, Delete y Req ya estaba
 import { MotorcyclesService } from '../service/motorcycles.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import express from 'express';
 
+@ApiTags('Motocicletas')
+@ApiBearerAuth()
 @Controller('motorcycles')
 export class MotorcyclesController {
   constructor(private readonly motorcyclesService: MotorcyclesService) { }

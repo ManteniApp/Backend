@@ -32,15 +32,19 @@ export class MaintenanceSummaryService {
     try {
       const summary = await this.maintenanceSummaryRepo.getSummaryWithFilters(filters);
       
+      // No lanzar error si no hay mantenimientos, devolver un resumen vacío
       if (summary.totalMantenimientos === 0) {
-        throw new NotFoundException('No se encontraron mantenimientos con los filtros aplicados');
+        return {
+          totalMantenimientos: 0,
+          costoTotal: 0,
+          costoPromedio: 0,
+          mantenimientos: [],
+          estadisticasPorTipo: []
+        };
       }
 
       return summary;
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
       throw new Error('Error al obtener el resumen de mantenimientos');
     }
   }

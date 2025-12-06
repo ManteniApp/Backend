@@ -3,6 +3,7 @@ import { Controller, Get, Query, UseGuards, Res, BadRequestException, ParseIntPi
 import express from 'express';
 import { MaintenanceSummaryService } from '../service/maintenance-summary.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 interface MaintenanceSummaryResponse {
   totalMantenimientos: number;
@@ -17,12 +18,19 @@ interface MaintenanceSummaryResponse {
   }[];
 }
 
+@ApiTags('Resumen de Mantenimientos')
+@ApiBearerAuth()
 @Controller('maintenance-summary')
 export class MaintenanceSummaryController {
   constructor(private readonly maintenanceSummaryService: MaintenanceSummaryService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get()
+  @ApiOperation({ summary: 'Obtener resumen de mantenimientos con filtros opcionales' })
+  @ApiQuery({ name: 'motoId', required: false, type: Number, description: 'ID de la motocicleta' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Fecha inicio (YYYY-MM-DD)', example: '2025-01-01' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'Fecha fin (YYYY-MM-DD)', example: '2025-12-31' })
+  @ApiQuery({ name: 'tipo', required: false, type: String, description: 'Tipo de mantenimiento (aceite, frenos, cadena, llantas, batería, etc.)', example: 'aceite' })
   async getSummary(
     @Query('motoId', new ParseIntPipe({ optional: true })) motoId?: number,
     @Query('startDate') startDate?: string,
@@ -71,6 +79,11 @@ export class MaintenanceSummaryController {
 
   @UseGuards(JwtAuthGuard)
   @Get('pdf')
+  @ApiOperation({ summary: 'Generar reporte PDF de mantenimientos con filtros opcionales' })
+  @ApiQuery({ name: 'motoId', required: false, type: Number, description: 'ID de la motocicleta' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Fecha inicio (YYYY-MM-DD)', example: '2025-01-01' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'Fecha fin (YYYY-MM-DD)', example: '2025-12-31' })
+  @ApiQuery({ name: 'tipo', required: false, type: String, description: 'Tipo de mantenimiento (aceite, frenos, cadena, llantas, batería, etc.)', example: 'aceite' })
   async generatePdf(
     @Query('motoId', new ParseIntPipe({ optional: true })) motoId?: number,
     @Query('startDate') startDate?: string,
