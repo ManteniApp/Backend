@@ -1,5 +1,5 @@
 // maintenance-summary.controller.ts
-import { Controller, Get, Query, UseGuards, Res, BadRequestException, ParseIntPipe, Optional, } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Res, BadRequestException, ParseIntPipe, Optional } from '@nestjs/common';
 import express from 'express';
 import { MaintenanceSummaryService } from '../service/maintenance-summary.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -30,15 +30,41 @@ export class MaintenanceSummaryController {
     @Query('tipo') tipo?: string,
   ): Promise<MaintenanceSummaryResponse> {
     try {
+      // Validar que si una fecha existe, la otra también debe existir
+      if ((startDate && !endDate) || (!startDate && endDate)) {
+        throw new BadRequestException(
+          'Debes proporcionar ambas fechas (startDate y endDate) o ninguna',
+        );
+      }
+
+      // Validar formato de fecha si se proporcionan
+      let startDateObj: Date | undefined;
+      let endDateObj: Date | undefined;
+
+      if (startDate && endDate) {
+        startDateObj = this.parseDate(startDate);
+        endDateObj = this.parseDate(endDate);
+
+        // Validar que startDate sea menor que endDate
+        if (startDateObj > endDateObj) {
+          throw new BadRequestException(
+            'La fecha de inicio debe ser anterior a la fecha de fin',
+          );
+        }
+      }
+
       const filters = {
         motoId,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
+        startDate: startDateObj,
+        endDate: endDateObj,
         tipo,
       };
 
       return await this.maintenanceSummaryService.getMaintenanceSummary(filters);
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(error.message);
     }
   }
@@ -53,10 +79,31 @@ export class MaintenanceSummaryController {
     @Res() res?: express.Response,
   ) {
     try {
+      // Misma validación que en getSummary
+      if ((startDate && !endDate) || (!startDate && endDate)) {
+        throw new BadRequestException(
+          'Debes proporcionar ambas fechas (startDate y endDate) o ninguna',
+        );
+      }
+
+      let startDateObj: Date | undefined;
+      let endDateObj: Date | undefined;
+
+      if (startDate && endDate) {
+        startDateObj = this.parseDate(startDate);
+        endDateObj = this.parseDate(endDate);
+
+        if (startDateObj > endDateObj) {
+          throw new BadRequestException(
+            'La fecha de inicio debe ser anterior a la fecha de fin',
+          );
+        }
+      }
+
       const filters = {
         motoId,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
+        startDate: startDateObj,
+        endDate: endDateObj,
         tipo,
       };
 
@@ -73,5 +120,21 @@ export class MaintenanceSummaryController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  /**
+   * Método para parsear y validar fechas
+   */
+  private parseDate(dateString: string): Date {
+    const date = new Date(dateString);
+    
+    // Validar si la fecha es inválida
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException(
+        `Formato de fecha inválido: ${dateString}. Use formato YYYY-MM-DD`,
+      );
+    }
+
+    return date;
   }
 }
