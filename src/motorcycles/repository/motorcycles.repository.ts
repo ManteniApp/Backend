@@ -12,8 +12,10 @@ export type MotorcycleRow = {
   marca: string;
   modelo: string;
   placa: string;
-  anio?: number;
-  kilometraje?: number;
+  anio?: number | null;  // Cambia a number | null
+  kilometraje?: number | null;  // Cambia a number | null
+  imagen_url?: string | null;  // 👈 Cambia a string | null
+  imagen_local?: string | null;
 };
 
 @Injectable()
@@ -25,10 +27,19 @@ export class MotorcyclesRepository {
   async create(data: Omit<MotorcycleRow, 'id'>): Promise<MotorcycleRow> {
     try {
       const result = await this.db.query`
-        INSERT INTO motos (cliente_id, marca, modelo, placa, anio, kilometraje)
-        VALUES (${data.cliente_id}, ${data.marca}, ${data.modelo}, ${data.placa}, ${data.anio || null}, ${data.kilometraje || null})
-        RETURNING *
-      `;
+      INSERT INTO motos (cliente_id, marca, modelo, placa, anio, kilometraje, imagen_url, imagen_local)
+      VALUES (
+        ${data.cliente_id}, 
+        ${data.marca}, 
+        ${data.modelo}, 
+        ${data.placa}, 
+        ${data.anio || null}, 
+        ${data.kilometraje || null},
+        ${data.imagen_url || null},
+        ${data.imagen_local || null}
+      )
+      RETURNING *
+    `;
       this.logger.log(`✅ Motocicleta creada en BD con id ${result[0].id}`);
       return result[0];
     } catch (error) {
@@ -94,27 +105,31 @@ export class MotorcyclesRepository {
 
   // 👈 NUEVO: Actualizar moto de forma parcial (usa COALESCE para mantener valores existentes si no se proporcionan)
   async update(
-    id: number, 
+    id: number,
     updates: Partial<{
       marca: string;
       modelo: string;
       placa: string;
       anio: number;
       kilometraje: number;
+      imagen_url?: string;    // 👈 Nuevo
+      imagen_local?: string;  // 👈 Nuevo
     }>
   ): Promise<MotorcycleRow> {
     try {
       const result = await this.db.query`
-        UPDATE motos 
-        SET 
-          marca = COALESCE(${updates.marca}, marca),
-          modelo = COALESCE(${updates.modelo}, modelo),
-          placa = COALESCE(${updates.placa}, placa),
-          anio = COALESCE(${updates.anio}, anio),
-          kilometraje = COALESCE(${updates.kilometraje}, kilometraje)
-        WHERE id = ${id}
-        RETURNING *
-      `;
+      UPDATE motos 
+      SET 
+        marca = COALESCE(${updates.marca}, marca),
+        modelo = COALESCE(${updates.modelo}, modelo),
+        placa = COALESCE(${updates.placa}, placa),
+        anio = COALESCE(${updates.anio}, anio),
+        kilometraje = COALESCE(${updates.kilometraje}, kilometraje),
+        imagen_url = COALESCE(${updates.imagen_url}, imagen_url),    // 👈 Nuevo
+        imagen_local = COALESCE(${updates.imagen_local}, imagen_local) // 👈 Nuevo
+      WHERE id = ${id}
+      RETURNING *
+    `;
       if (result.length === 0) {
         throw new NotFoundException(`Motocicleta con id ${id} no encontrada`);
       }
