@@ -13,6 +13,20 @@ export class MotorcyclesService {
               private readonly imageScraperService: MotorcycleImageScraperService,
   ) {}
 
+  private getImageUrl(imagen_url: string | null | undefined, imagen_local: string | null | undefined): string | null {
+    // Priorizar imagen local
+    if (imagen_local) {
+      return imagen_local; // Ya tiene el path /uploads/motorcycles/...
+    }
+    
+    // Si hay imagen externa, usar proxy para evitar CORS
+    if (imagen_url) {
+      return `/image-proxy?url=${encodeURIComponent(imagen_url)}`;
+    }
+    
+    return null;
+  }
+
   async createMotorcycle(data: {
     cliente_id: number;
     marca: string;
@@ -107,8 +121,7 @@ export class MotorcyclesService {
       placa: moto.placa,
       año: moto.anio,
       kilometraje: moto.kilometraje,
-      imagen_url: moto.imagen_url,
-      imagen_local: moto.imagen_local,
+      imagen_url: this.getImageUrl(moto.imagen_url, moto.imagen_local),
     }));
   }
 
@@ -143,8 +156,7 @@ export class MotorcyclesService {
       placa: moto.placa,
       anio: moto.anio,
       kilometraje: moto.kilometraje,
-      imagen_url: moto.imagen_url,
-      imagen_local: moto.imagen_local,
+      imagen_url: this.getImageUrl(moto.imagen_url, moto.imagen_local),
     };
   }
 

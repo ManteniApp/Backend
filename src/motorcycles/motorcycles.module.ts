@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { MotorcyclesController } from './controller/motorcycles.controller';
 import { MotorcycleSpecsController } from './controller/motorcycle-specs.controller';
+import { ImageProxyController } from './controller/image-proxy.controller';
 import { MotorcyclesService } from './service/motorcycles.service';
 import { MotorcyclesRepository } from '../motorcycles/repository/motorcycles.repository'; 
 import { MotorcycleSpecsService } from './service/motorcycle-specs.service';
@@ -10,7 +11,7 @@ import { DatabaseModule } from '../infrastructure/database/database.module';
 import { MotorcycleSpecsRepository } from './repository/motorcycle-specs.repository';
 @Module({
   imports: [DatabaseModule],
-  controllers: [MotorcyclesController, MotorcycleSpecsController],
+  controllers: [MotorcyclesController, MotorcycleSpecsController, ImageProxyController],
   providers: [MotorcyclesService, MotorcyclesRepository, MotorcycleSpecsRepository, MotorcycleSpecsService, MotorcycleImageScraperService], 
   exports: [MotorcyclesService],
 })
