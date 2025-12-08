@@ -107,6 +107,8 @@ export class MotorcyclesService {
       placa: moto.placa,
       año: moto.anio,
       kilometraje: moto.kilometraje,
+      imagen_url: moto.imagen_url,
+      imagen_local: moto.imagen_local,
     }));
   }
 
@@ -141,6 +143,8 @@ export class MotorcyclesService {
       placa: moto.placa,
       anio: moto.anio,
       kilometraje: moto.kilometraje,
+      imagen_url: moto.imagen_url,
+      imagen_local: moto.imagen_local,
     };
   }
 
