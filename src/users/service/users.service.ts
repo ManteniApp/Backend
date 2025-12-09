@@ -177,6 +177,7 @@ export class UsersService {
 
     await this.resetRepo.create(user.id, token, expiresAt);
 
+    console.log('🔗 Generando link con frontendUrl:', frontendUrl);
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
     const html = `<p>Hola ${user.nombre},</p>
       <p>Haz solicitado resetear tu contraseña. Ingresa al siguiente enlace para cambiarla:</p>
