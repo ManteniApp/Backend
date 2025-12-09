@@ -1,15 +1,31 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
-import { MotorcyclesRepository } from '../repository/motorcycles.repository';
+import { MotorcycleRow, MotorcyclesRepository } from '../repository/motorcycles.repository';
 import { MotorcycleSpecsRepository } from '../repository/motorcycle-specs.repository';
+import { MotorcycleImageScraperService } from './scraping.service';
 @Injectable()
 export class MotorcyclesService {
   private readonly logger = new Logger(MotorcyclesService.name);
 
   constructor(private readonly motorcyclesRepo: MotorcyclesRepository,
               private readonly motorcycleSpecsRepo : MotorcycleSpecsRepository,
+              private readonly imageScraperService: MotorcycleImageScraperService,
   ) {}
+
+  private getImageUrl(imagen_url: string | null | undefined, imagen_local: string | null | undefined): string | null {
+    // Priorizar imagen local
+    if (imagen_local) {
+      return imagen_local; // Ya tiene el path /uploads/motorcycles/...
+    }
+    
+    // Si hay imagen externa, usar proxy para evitar CORS
+    if (imagen_url) {
+      return `/image-proxy?url=${encodeURIComponent(imagen_url)}`;
+    }
+    
+    return null;
+  }
 
   async createMotorcycle(data: {
     cliente_id: number;
@@ -18,7 +34,8 @@ export class MotorcyclesService {
     placa: string;
     anio?: number;
     kilometraje?: number;
-  }) {
+    buscarImagen?: boolean;
+  }): Promise<MotorcycleRow> { // 👈 Agrega el tipo de retorno
     if (!data.cliente_id || !data.marca || !data.modelo || !data.placa) {
       throw new BadRequestException('Campos requeridos: cliente_id, marca, modelo y placa');
     }
@@ -32,8 +49,62 @@ export class MotorcyclesService {
       throw new BadRequestException('El año de la motocicleta no es válido');
     }
 
-    const moto = await this.motorcyclesRepo.create(data);
-    this.logger.log(`✅ Motocicleta creada con id ${moto.id}`);
+    // Búsqueda de imagen (si está habilitado)
+    let imagen_url: string | null = null;
+    let imagen_local: string | null = null;
+    
+    const shouldSearchImage = data.buscarImagen !== false; // true por defecto
+    
+    if (shouldSearchImage) {
+      try {
+        this.logger.log(`🔍 Buscando imagen para: ${data.marca} ${data.modelo}`);
+        
+        const imageResult = await this.imageScraperService.searchMotorcycleImage(
+          data.marca,
+          data.modelo,
+          data.anio,
+        );
+
+        if (imageResult) {
+          imagen_url = imageResult.url;
+          this.logger.log(`✅ Imagen encontrada en: ${imageResult.source}`);
+
+          // Intentar guardar localmente
+          if (!imageResult.url.includes('placeholder.com')) {
+            try {
+              imagen_local = await this.imageScraperService.downloadAndSaveImage(
+                imageResult.url,
+                data.marca,
+                data.modelo,
+                data.placa,
+              );
+              if (imagen_local) {
+                this.logger.log(`💾 Imagen guardada: ${imagen_local}`);
+              }
+            } catch (saveError) {
+              this.logger.warn(`⚠️ No se pudo guardar imagen localmente: ${saveError.message}`);
+            }
+          }
+        }
+      } catch (scrapingError) {
+        this.logger.warn(`⚠️ Error en búsqueda de imagen: ${scrapingError.message}`);
+        // No fallar el registro por error de imagen
+      }
+    }
+
+    // Crear la moto con datos de imagen
+    const moto = await this.motorcyclesRepo.create({
+      cliente_id: data.cliente_id,
+      marca: data.marca,
+      modelo: data.modelo,
+      placa: data.placa,
+      anio: data.anio ?? null, // 👈 Usa null si es undefined
+      kilometraje: data.kilometraje ?? null, // 👈 Usa null si es undefined
+      imagen_url,    // 👈 string | null
+      imagen_local,  // 👈 string | null
+    });
+
+    this.logger.log(`✅ Motocicleta creada con id ${moto.id} ${imagen_url ? '(con imagen)' : '(sin imagen)'}`);
     return moto;
   }
 
@@ -50,6 +121,7 @@ export class MotorcyclesService {
       placa: moto.placa,
       año: moto.anio,
       kilometraje: moto.kilometraje,
+      imagen_url: this.getImageUrl(moto.imagen_url, moto.imagen_local),
     }));
   }
 
@@ -84,6 +156,7 @@ export class MotorcyclesService {
       placa: moto.placa,
       anio: moto.anio,
       kilometraje: moto.kilometraje,
+      imagen_url: this.getImageUrl(moto.imagen_url, moto.imagen_local),
     };
   }
 

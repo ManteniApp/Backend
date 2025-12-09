@@ -12,8 +12,9 @@ import { LoginUserDto } from '../dto/login-user.dto';
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-
+@ApiTags('Usuarios')
 @Controller('users')
 export class UsersController {
   constructor(
@@ -150,8 +151,11 @@ export class UsersController {
   }
 
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    return this.usersService.loginWithEmail(body.email, body.password);
+  @ApiOperation({ summary: 'Iniciar sesión con email y contraseña - Devuelve token JWT' })
+  @ApiResponse({ status: 200, description: 'Login exitoso, devuelve accessToken' })
+  @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
+  async login(@Body() loginDto: LoginUserDto) {
+    return this.usersService.loginWithEmail(loginDto.email, loginDto.password);
   }
 
   @Post('google')
